@@ -1,0 +1,18 @@
+# This is a tmp .yaml file with data on employees
+data_records:
+  8:
+    name: Jane Smith
+    address: 24 Rudolph Avenue Singapore - 123658
+    phone: 7653826383
+  99:
+    name: Mary Shelley
+    address: Block 37, Frankenstein Avenue London - 126998
+    phone: 1290120208
+  7:
+    name: Matt Smith
+    address: 32 Crown Lane Singapore - 123658
+    phone: 232321232
+  67:
+    name: Claire Foy
+    address: Block 21, Crown Avenue London - 126998
+    phone: 2372373007

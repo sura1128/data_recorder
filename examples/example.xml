@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8">
+<data_records>
+    <employee id="55" name="Dudley Dursley" address="27 Privet Drive Surrey, UK - 12681" phone="125182523"/>
+    <employee id="64" name="Petunia Dursley" address="27 Privet Drive Surrey, UK - 12681" phone="37825387"/>
+    <employee id="65" name="Vernon Dursley" address="27 Privet Drive Surrey, UK - 12681" phone="72368232"/>
+    <employee id="25" name="Severus Snape" address="Hogwarts Scotland UK - 273528" phone="273812326"/>
+</data_records>

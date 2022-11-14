@@ -1,0 +1,77 @@
+- data_records:
+  - '27':
+      address: 154 Highgate Grove Singapore - 176934
+      name: Su Sengupta
+      phone: '12345678'
+  - '76':
+      address: Buckingham Palace London - 125678
+      name: The Queen
+      phone: '12219970'
+  - '56':
+      address: Somewhere in Brooklyn NYC USA
+      name: Peter Parker
+      phone: '78638263'
+  - null:
+      address: Block 666 Underworld - 127683
+      name: Hades
+      phone: '23338698'
+  - '55':
+      address: Stark Industries NYC 123566
+      name: Iron Man
+      phone: '872382932'
+  - '58':
+      address: In the multiverse
+      name: Wanda
+      phone: '263827632'
+  - '98':
+      address: 23 Huck Finn Avenue Yorkshire UK - 126987
+      name: Aunt Polly
+      phone: '635215853'
+  - '43':
+      address: 123 Highgate Grove Singapore - 323244
+      name: John Smith
+      phone: '34323434'
+  - '23':
+      address: Rabbit Hole London - 232323
+      name: Bugs Bunny
+      phone: '87263162363'
+  - null:
+      address: Block 145 Earth NYC - 126979
+      name: Thor
+      phone: '2363127633333'
+  - null:
+      address: 174 Bird Lane LA - 126990
+      name: Hawkeye
+      phone: '236333336'
+  - '8':
+      address: 24 Rudolph Avenue Singapore - 123658
+      name: Jane Smith
+      phone: '7653826383'
+  - '99':
+      address: Block 37, Frankenstein Avenue London - 126998
+      name: Mary Shelley
+      phone: '1290120208'
+  - '7':
+      address: 32 Crown Lane Singapore - 123658
+      name: Matt Smith
+      phone: '232321232'
+  - '67':
+      address: Block 21 Crown Avenue London - 126998
+      name: Claire Foy
+      phone: '2372373007'
+  - '55':
+      address: 27 Privet Drive Surrey  UK - 12681
+      name: Dudley Dursley
+      phone: '125182523'
+  - '64':
+      address: 27 Privet Drive Surrey  UK - 12681
+      name: Petunia Dursley
+      phone: '37825387'
+  - '65':
+      address: 27 Privet Drive Surrey  UK - 12681
+      name: Vernon Dursley
+      phone: '72368232'
+  - '25':
+      address: Hogwarts Scotland UK - 273528
+      name: Severus Snape
+      phone: '273812326'
