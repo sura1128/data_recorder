@@ -66,14 +66,16 @@ class DataRecord:
     
     def validate_entry(self):
         #  check for spam characters
-        self._id = str(self._id)
+        self._id = re.sub("\D", "", str(self._id))
         self._phone = re.sub("\D", "", str(self._phone))
-        self._address = re.sub('[^a-zA-Z0-9 \n\.]', '', self._address)
+        self._name = re.sub('[^a-zA-Z0-9 \n\.]', ' ', self._name)
+        self._name = ' '.join(self._name.split())
+        self._address = re.sub('[^a-zA-Z0-9 \n\.]', ' ', self._address)
 
 
 class FormatHandler:
     # class to read and write file data of different formats
-    def __init__(self, file_format, file_path):
+    def __init__(self, file_format=None, file_path=None):
         self._file_format = file_format
         self._file_path = file_path
         self._db_path = "./main.json"
@@ -87,13 +89,24 @@ class FormatHandler:
         exec(func_name)
     
     def push_to_db(self, data_entries):
-        existing_data = []
-        with open(self._db_path) as filehandler:
-            existing_data = json.load(filehandler)
-            data_entries = self.remove_duplicates(existing_data, data_entries)
+        existing_data = {"data_records": []}
+        if not os.path.exists(self._db_path):
+            with open(self._db_path, 'w') as filehandler:
+                json.dump(existing_data, filehandler, indent=4)
+        else:
+            try:
+                with open(self._db_path) as filehandler:
+                    existing_data = json.load(filehandler) or {"data_records": []}
+                    data_entries = self.remove_duplicates(existing_data, data_entries)
+            except json.decoder.JSONDecodeError:
+                print ("DB might be corrupted, please check with support team.")
+
+        if existing_data.get("data_records") or data_entries:
             existing_data.get("data_records").extend(data_entries)
-        with open(self._db_path, 'w') as filehandler:
-            json.dump(existing_data, filehandler, indent=4)
+            with open(self._db_path, 'w') as filehandler:
+                json.dump(existing_data, filehandler, indent=4)
+        else:
+            print ("No data available for upload.")
     
     def remove_duplicates(self, existing_data, data_entries):
         data_records = existing_data.get("data_records")
@@ -110,13 +123,19 @@ class FormatHandler:
         return new_data_entries
 
     def upload_json_data(self):
+        upload_entries = []
         with open(self._file_path) as filehandler:
             upload_data = json.load(filehandler)
             try:
                 upload_entries = upload_data.get("data_records")
             except:
                 print ("Please follow the right format for data upload. Refer to: example.%s" % self._file_format)
-        self.push_to_db(upload_entries)
+        data_entries = []
+        for entry in upload_entries:
+            data_entry = self.get_data_record(entry.get("id"), entry.get("name"),
+                entry.get("address"), entry.get("phone")).to_dict()
+            data_entries.append(data_entry)
+        self.push_to_db(data_entries)
 
     def upload_csv_data(self):
         rows = []
@@ -131,9 +150,11 @@ class FormatHandler:
             return
         else:
             for entry in rows:
-                data_entry = {}
-                for index in range(0, len(self._supported_records)):
-                    data_entry[self._supported_records[index]] = entry[index].replace('"', '').strip()
+                try:
+                    data_entry = self.get_data_record(entry[0], entry[1], entry[2], entry[3]).to_dict()
+                except IndexError:
+                    print ("CSV entry %s is missing a field. Skipping it." % entry)
+                    continue
                 upload_entries.append(data_entry)
             self.push_to_db(upload_entries)
 

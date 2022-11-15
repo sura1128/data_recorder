@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8">
+<data_records>
+    <employee id="43" name="John Smith" address="123 Highgate Grove Singapore - 323244" phone="34323434"/>
+    <employee id="23" name="Bugs Bunny" address="Rabbit Hole London - 232323" phone="87263162363"/>
+</data_records>

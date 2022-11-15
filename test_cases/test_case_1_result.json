@@ -1,0 +1,22 @@
+{
+    "data_records": [
+        {
+            "id": 1,
+            "name": "Anne Rice",
+            "address": "23 Vampire Ave NY 12512",
+            "phone": "66666666"
+        },
+        {
+            "id": 56,
+            "name": "Becky",
+            "address": "Block 25 LA 1728126",
+            "phone": "36553232"
+        },
+        {
+            "id": 43,
+            "name": "Toto Ro",
+            "address": "The Banana Leaf Tokyo 238723",
+            "phone": "34563424"
+        }
+    ]
+}

@@ -34,6 +34,7 @@ SUPPORTED_RECORDS = ["id", "name", "address", "phone"]
 SUPPORT_EMAIL_ALIAS = "data-recorder-help@gmail.com"
 HTML_DISPLAY_PATH = "main.html"
 
+
 def add_data():
     # upper limit of 100 entries as an example.
     DB_SIZE = get_DB_size()
@@ -49,14 +50,17 @@ def add_data():
         print ("Please enter a valid option for number of entries.")
     return
 
+
 def get_DB_size():
     try:
         db_data = open(DB_PATH)
     except:
         print ("unable to read DB")
+        return 0
     data_records = json.load(db_data)
     db_size = len(data_records.get("data_records"))
     return db_size
+
 
 def add_data_entries(total_entries):
     num_entry = 1
@@ -80,7 +84,7 @@ def add_data_entries(total_entries):
         num_entry += 1
 
     push_to_db(data_entries)
-    # push_to_database(data_entries)
+
 
 def is_duplicate(n_id):
     existing_data = pull_from_db()
@@ -95,33 +99,36 @@ def is_duplicate(n_id):
 
 
 def push_to_db(data_entries):
-    existing_data = []
-    try:
-        with open(DB_PATH) as filehandler:
-            existing_data = json.load(filehandler)
-            existing_data.get("data_records").extend(data_entries)
+    existing_data = {"data_records": []}
+    if not os.path.exists(DB_PATH):
         with open(DB_PATH, 'w') as filehandler:
             json.dump(existing_data, filehandler, indent=4)
-    except OSError as e:
-        print ("Error: Unable to upload data to DB. Please contact [%s]." % SUPPORT_EMAIL_ALIAS)
+    else:
+        try:
+            with open(DB_PATH) as filehandler:
+                existing_data = json.load(filehandler) or {"data_records": []}
+        except json.decoder.JSONDecodeError:
+            print ("DB might be corrupted, please check with [%s]." % SUPPORT_EMAIL_ALIAS)
+
+    if existing_data.get("data_records") or data_entries:
+        existing_data.get("data_records").extend(data_entries)
+        with open(DB_PATH, 'w') as filehandler:
+            json.dump(existing_data, filehandler, indent=4)
+    else:
+        print ("No data available for upload.")
 
 
 def pull_from_db():
+    existing_data = {"data_records": []}
     if not os.path.exists(DB_PATH):
         print ("%s appears to be offline. Cannot display any data." % DB_PATH)
         return
     try:
         with open(DB_PATH) as filehandler:
             existing_data = json.load(filehandler)
-    except OSError as e:
-        print ("Error: Unable to download data from DB. Please contact [%s]." % SUPPORT_EMAIL_ALIAS)
+    except json.decoder.JSONDecodeError:
+        print ("DB might be corrupted, please check with [%s]." % SUPPORT_EMAIL_ALIAS)
     return existing_data
-
-def connect_to_db():
-    # add an exception to catch DB errors
-    conn = sqlite3.connect('test_database')
-    cursor = conn.cursor()
-    return cursor
 
 
 def search_data():
@@ -138,12 +145,7 @@ def search_data():
         return
     search_value = input("What %s would you like to search for: " % search_field)
 
-    found_entries = []
-    print ("Searching for %s amongst %s in entries...\n" % (search_value, search_field))
-    for record in data_records:
-        if search_value.lower() in record.get(search_field).lower():
-            found_entries.append(record)
-    
+    found_entries = search_entries(data_records, search_value, search_field)
     if not found_entries:
         print ("There are no matching entries with '%s' in [%s]." % (search_value, search_field))
         return
@@ -154,6 +156,15 @@ def search_data():
         tabular_list.append(entry.values())
     print(tabulate(tabular_list,  headers=SUPPORTED_RECORDS, tablefmt='orgtbl'))
     print("\n")
+
+
+def search_entries(data_records, search_value, search_field):
+    found_entries = []
+    print ("Searching for %s amongst %s in entries...\n" % (search_value, search_field))
+    for record in data_records:
+        if search_value.lower() in record.get(search_field).lower():
+            found_entries.append(record)
+    return found_entries
 
 
 def display_data():
@@ -167,6 +178,7 @@ def display_data():
         tabular_list.append(entry.values())
     print(tabulate(tabular_list,  headers=SUPPORTED_RECORDS, tablefmt='orgtbl'))
     print("\n")
+
 
 def display_html():
     existing_data = pull_from_db()
@@ -271,6 +283,7 @@ def download_data():
         print ("Downloading data to: %s..." % dest)
         formathandler = FormatHandler(dest_ext, dest)
         formathandler.download()
+
 
 def display_info():
     print ("Once new entries are added or uploaded, they will be stored in a file called 'main.json'.\n")
