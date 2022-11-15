@@ -5,10 +5,6 @@
 #!/usr/bin/env python
 
 import json
-import csv
-import yaml
-import lxml
-from bs4 import BeautifulSoup
 import xml.etree.ElementTree as ET
 
 import os
@@ -32,13 +28,17 @@ FUNCTIONS = ["add", "upload", "download", "search", "display", "convert", "info"
 SUPPORTED_RECORDS = ["id", "name", "address", "phone"]
 
 SUPPORT_EMAIL_ALIAS = "data-recorder-help@gmail.com"
+AUTHORS = ["Su Sengupta"]
 HTML_DISPLAY_PATH = "main.html"
 
 
 def add_data():
-    # upper limit of 100 entries as an example.
+    '''
+        Adds entries by taking in number of entries and then details of the entries.
+        Currently, there is an upper limit of 100 maximum entries.
+    '''
     DB_SIZE = get_DB_size()
-    total_entries = input("Currently, we have [%s] slots left in our DB. Please type the number of entries you'd like to add today.\n" % (DB_CAPACITY - DB_SIZE))
+    total_entries = input("Currently, we have [%s] slots left in our DB. Please type the number of entries you'd like to add today: " % (DB_CAPACITY - DB_SIZE))
     
     if total_entries.isnumeric():
         if DB_SIZE + int(total_entries) > 100:
@@ -52,6 +52,11 @@ def add_data():
 
 
 def get_DB_size():
+    '''
+        Returns
+        -------
+        db_size(int): Number of total entries in the db.
+    '''
     try:
         db_data = open(DB_PATH)
     except:
@@ -63,6 +68,14 @@ def get_DB_size():
 
 
 def add_data_entries(total_entries):
+    '''
+        Requests for the entry details from the user and pushes the
+        records to db.
+
+        Parameters
+        ----------
+        total_entries(int): total number of entries being added
+    '''
     num_entry = 1
     data_entries = []
 
@@ -77,6 +90,7 @@ def add_data_entries(total_entries):
         name = input("Enter the name: ")
         address = input("Enter the address: ")
         phone = input("Enter phone number: ")
+        print ("\n")
 
         data_record = DataRecord(n_id, name, address, phone)
         data_record_dict = data_record.to_dict()
@@ -87,6 +101,17 @@ def add_data_entries(total_entries):
 
 
 def is_duplicate(n_id):
+    '''
+        Checks for duplicate IDs inside the existing data records.
+
+        Parameters
+        ----------
+        n_id(int): ID of the employee being added
+
+        Returns
+        -------
+        bool: True if the ID matches an existing entry
+    '''
     existing_data = pull_from_db()
     if not existing_data:
         print ("There are no data records in the DB to display. Exiting.")
@@ -99,6 +124,16 @@ def is_duplicate(n_id):
 
 
 def push_to_db(data_entries):
+    '''
+        Pushes new data entries into db.
+        By default, this uploads directly to a JSON file
+        that is currently acting as a storage unit for
+        the data records.
+
+        Parameters
+        ----------
+            data_entries(dict): dictionary of new data
+    '''
     existing_data = {"data_records": []}
     if not os.path.exists(DB_PATH):
         with open(DB_PATH, 'w') as filehandler:
@@ -119,6 +154,12 @@ def push_to_db(data_entries):
 
 
 def pull_from_db():
+    '''
+    Pulls data records from db.
+    By default, this downloads directly from a JSON file
+    that is currently acting as a storage unit for
+    the data records.
+    '''
     existing_data = {"data_records": []}
     if not os.path.exists(DB_PATH):
         print ("%s appears to be offline. Cannot display any data." % DB_PATH)
@@ -132,6 +173,11 @@ def pull_from_db():
 
 
 def search_data():
+    '''
+    Requests for a search value and checks the db
+    for a matching entry. The current search fields
+    supported are: ["id", "name", "address", "phone"]
+    '''
     existing_data = pull_from_db()
     if not existing_data:
         print ("There are no data records in the DB to display. Exiting.")
@@ -139,7 +185,7 @@ def search_data():
     data_records = existing_data.get("data_records")
 
     # More features: starting with, ends with, contains
-    search_field = input("Which of the following fields would you like to use for searching: %s\n" % SUPPORTED_RECORDS)
+    search_field = input("Which of the following fields would you like to use for searching: %s" % SUPPORTED_RECORDS)
     if search_field.lower() not in SUPPORTED_RECORDS:
         print ("The field [%s] does not exist in our records. Please contact [%s] if you'd like to add a new field or try again." % (search_field, SUPPORT_EMAIL_ALIAS))
         return
@@ -159,6 +205,16 @@ def search_data():
 
 
 def search_entries(data_records, search_value, search_field):
+    '''
+        Searches for a matching entry based on a search field.
+
+        Parameters
+        ----------
+            data_records(dict): existing data in db
+            search_value(str): the searched word
+            search_field(str): the field being searched
+                               eg. 'name', 'id' etc.
+    '''
     found_entries = []
     print ("Searching for %s amongst %s in entries...\n" % (search_value, search_field))
     for record in data_records:
@@ -167,7 +223,11 @@ def search_entries(data_records, search_value, search_field):
     return found_entries
 
 
-def display_data():
+def display_text():
+    '''
+    Displays all data records in text form and a 
+    tabular format on shell.
+    '''
     existing_data = pull_from_db()
     if not existing_data or not existing_data.get("data_records"):
         print ("There are no data records in the DB to display. Exiting.")
@@ -181,6 +241,10 @@ def display_data():
 
 
 def display_html():
+    '''
+    Displays all data records in html form and renders
+    out an html template that is stored locally.
+    '''
     existing_data = pull_from_db()
     if not existing_data or not existing_data.get("data_records"):
         print ("There are no data records in the DB to display. Exiting.")
@@ -222,6 +286,12 @@ def display_html():
 
 
 def convert_data():
+    '''
+    Converts serialized data from one format to another.
+    Eg. converts uploads.csv to uploads.xml.
+    Does not interact with the main.json (main db),
+    only runs a standalone conversion.
+    '''
     src = input("Please provide the full path to the source file i.e. the file you would like to convert: ")
     dest = input("Please provide the destination filepath: ")
     src_name, src_ext = os.path.splitext(src)
@@ -237,25 +307,26 @@ def convert_data():
         print ("This file format is not supported currently. Please contact [%s] to request for a new format." % SUPPORT_EMAIL_ALIAS)
     else:
         print ("Converting data from: %s..." % src)
-        formathandler = FormatHandler(src_ext, src)
+        formathandler = FormatHandler(src_ext, src, CONVERT_PATH, SUPPORTED_RECORDS)
         
-        with open(CONVERT_PATH, 'w+') as filehandler:
-           json.dump({"data_records": []}, filehandler, indent=4)
-        formathandler.set_db_path(CONVERT_PATH)
+        # with open(CONVERT_PATH, 'w+') as filehandler:
+        #    json.dump({"data_records": []}, filehandler, indent=4)
         formathandler.upload()
 
     if dest_ext not in SUPPORTED_FORMATS:
         print ("This file format is not supported currently. Please contact [%s] to request for a new format." % SUPPORT_EMAIL_ALIAS)
     else:
-        formathandler = FormatHandler(dest_ext, dest)
+        formathandler = FormatHandler(dest_ext, dest, CONVERT_PATH, SUPPORTED_RECORDS)
         if not os.path.exists(CONVERT_PATH):
             print ("Error: Source file not uploaded correctly. Exiting.")
             return
-        formathandler.set_db_path(CONVERT_PATH)
         formathandler.download()
 
 
 def upload_data():
+    '''
+    Requests for a source file to upload data to db.
+    '''
     src = input("Please provide the full path to the source file for uploading data (eg. my_dir/path_to_file.csv): ")
     src_name, src_ext = os.path.splitext(src)
     src_ext = src_ext.split(".")[-1] # remove '.' from extension
@@ -268,11 +339,14 @@ def upload_data():
         print ("Source file format is not supported currently. Please contact [%s] to request for a new format." % SUPPORT_EMAIL_ALIAS)
     else:
         print ("Uploading data from: %s..." % src)
-        formathandler = FormatHandler(src_ext, src)
+        formathandler = FormatHandler(src_ext, src, DB_PATH, SUPPORTED_RECORDS)
         formathandler.upload()
 
 
 def download_data():
+    '''
+    Requests for a destination file to download data from db.
+    '''
     dest = input("Please provide the full path to the destination file for downloading data (eg. my_dir/path_to_file.csv): ")
     dest_name, dest_ext = os.path.splitext(dest)
     dest_ext = dest_ext.split(".")[-1] # remove '.' from extension
@@ -281,17 +355,41 @@ def download_data():
         print ("This file format is not supported currently. Please contact [%s] to request for a new format." % SUPPORT_EMAIL_ALIAS)
     else:
         print ("Downloading data to: %s..." % dest)
-        formathandler = FormatHandler(dest_ext, dest)
+        formathandler = FormatHandler(dest_ext, dest, DB_PATH, SUPPORTED_RECORDS)
         formathandler.download()
 
 
 def display_info():
+    '''
+    Displays some information about the tool.
+    '''
     print ("Once new entries are added or uploaded, they will be stored in a file called 'main.json'.\n")
     print ("Currently, the following formats are supported for uploads/downloads: %s" % SUPPORTED_FORMATS)
+    print ("This tool is written and maintained by: %s" % AUTHORS)
     print ("If you have any queries, please contact: [%s]" % SUPPORT_EMAIL_ALIAS)
 
 
+def create_db():
+    '''
+        Creates a .json file that acts as a storage unit
+        for all the data records. In the future, this will
+        be replaced by a database.
+    '''
+    if not os.path.exists(DB_PATH):
+        with open(DB_PATH, 'w') as filehandler:
+            json.dump({"data_records": []}, filehandler, indent=4)
+    try:
+        with open(DB_PATH) as filehandler:
+            json.load(filehandler)
+    except json.decoder.JSONDecodeError:
+        with open(DB_PATH, 'w') as filehandler:
+            json.dump({"data_records": []}, filehandler, indent=4)
+
+
 def parse_args():
+    '''
+        Defines commands and parses them.
+    '''
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help="commands", dest="command")
     
@@ -311,18 +409,6 @@ def parse_args():
     return options
 
 
-def create_db():
-    if not os.path.exists(DB_PATH):
-        with open(DB_PATH, 'w') as filehandler:
-            json.dump({"data_records": []}, filehandler, indent=4)
-    try:
-        with open(DB_PATH) as filehandler:
-            json.load(filehandler)
-    except json.decoder.JSONDecodeError:
-        with open(DB_PATH, 'w') as filehandler:
-            json.dump({"data_records": []}, filehandler, indent=4)
-
-
 def main():
     print ("\n***Welcome to Data Recorder!***\n\nThis tool will help you store records for Employees that include: %s" % SUPPORTED_RECORDS)
     print ("Curently, Data Recorder supports the following functions: %s\n" % FUNCTIONS)
@@ -338,7 +424,7 @@ def main():
         if args.d_subcmds == "html":
             display_html()
         else:
-            display_data()  
+            display_text()  
     elif args.command == "upload":
         upload_data()
     elif args.command == "download":

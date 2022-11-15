@@ -5,6 +5,7 @@ from data_handler import DataRecord, FormatHandler
 
 TEST_DB_PATH = "test_cases/test_db.json"
 TEST_UPLOAD_PATH = "test_cases/test_upload.json"
+SUPPORTED_RECORDS = ["id", "name", "address", "phone"]
 
 class TestDataRecord(unittest.TestCase):
     def test_normal_data_record(self):
@@ -33,8 +34,7 @@ class TestFormatHandler(unittest.TestCase):
         data_entries = [{"id": 1, "name": "Anne Rice", "address": "23 Vampire Ave NY 12512", "phone": "66666666"},
                         {"id": 56, "name": "Becky", "address": "Block 25 LA 1728126", "phone": "36553232"},
                         {"id": 43, "name": "Toto Ro", "address": "The Banana Leaf Tokyo 238723", "phone": "34563424"}]
-        format_handler = FormatHandler()
-        format_handler.set_db_path("test_cases/test_case_1.json")
+        format_handler = FormatHandler(db_path="test_cases/test_case_1.json", supported_records=SUPPORTED_RECORDS)
         format_handler.push_to_db(data_entries)
         self.assertEqual(filecmp.cmp("test_cases/test_case_1_result.json", "test_cases/test_case_1.json"), True)
     
@@ -42,8 +42,7 @@ class TestFormatHandler(unittest.TestCase):
         data_entries = [{"id": 1, "name": "Anne Rice", "address": "23 Vampire Ave NY 12512", "phone": "66666666"},
                         {"id": 56, "name": "Becky", "address": "Block 25 LA 1728126", "phone": "36553232"},
                         {"id": 43, "name": "Toto Ro", "address": "The Banana Leaf Tokyo 238723", "phone": "34563424"}]
-        format_handler = FormatHandler()
-        format_handler.set_db_path("test_cases/test_case_1.json")
+        format_handler = FormatHandler(db_path="test_cases/test_case_1.json", supported_records=SUPPORTED_RECORDS)
         existing_data = format_handler.pull_from_db().get("data_records")
         self.assertEqual(data_entries, existing_data)
     
@@ -71,8 +70,7 @@ class TestFormatHandler(unittest.TestCase):
         if os.path.exists(TEST_DB_PATH):
             os.remove(TEST_DB_PATH)
 
-        format_handler = FormatHandler(test_ext, test_file_path)
-        format_handler.set_db_path(TEST_DB_PATH)
+        format_handler = FormatHandler(test_ext, test_file_path, TEST_DB_PATH, SUPPORTED_RECORDS)
         format_handler.upload_json_data()
         self.assertEqual(filecmp.cmp(TEST_DB_PATH, TEST_UPLOAD_PATH), True)
     
@@ -85,8 +83,7 @@ class TestFormatHandler(unittest.TestCase):
         if os.path.exists(TEST_DB_PATH):
             os.remove(TEST_DB_PATH)
 
-        format_handler = FormatHandler(test_ext, test_file_path)
-        format_handler.set_db_path(TEST_DB_PATH)
+        format_handler = FormatHandler(test_ext, test_file_path, TEST_DB_PATH, SUPPORTED_RECORDS)
         format_handler.upload_csv_data()
         self.assertEqual(filecmp.cmp(TEST_DB_PATH, TEST_UPLOAD_PATH), True)
     
@@ -99,8 +96,7 @@ class TestFormatHandler(unittest.TestCase):
         if os.path.exists(TEST_DB_PATH):
             os.remove(TEST_DB_PATH)
 
-        format_handler = FormatHandler(test_ext, test_file_path)
-        format_handler.set_db_path(TEST_DB_PATH)
+        format_handler = FormatHandler(test_ext, test_file_path, TEST_DB_PATH, SUPPORTED_RECORDS)
         format_handler.upload_yaml_data()
         self.assertEqual(filecmp.cmp(TEST_DB_PATH, TEST_UPLOAD_PATH), True)
     
@@ -113,32 +109,27 @@ class TestFormatHandler(unittest.TestCase):
         if os.path.exists(TEST_DB_PATH):
             os.remove(TEST_DB_PATH)
 
-        format_handler = FormatHandler(test_ext, test_file_path)
-        format_handler.set_db_path(TEST_DB_PATH)
+        format_handler = FormatHandler(test_ext, test_file_path, TEST_DB_PATH, SUPPORTED_RECORDS)
         format_handler.upload_xml_data()
         self.assertEqual(filecmp.cmp(TEST_DB_PATH, TEST_UPLOAD_PATH), True)
     
     def test_json_download(self):
-        format_handler = FormatHandler("json", "test_cases/test_download.json")
-        format_handler.set_db_path(TEST_DB_PATH)
+        format_handler = FormatHandler("json", "test_cases/test_download.json", TEST_DB_PATH, SUPPORTED_RECORDS)
         format_handler.download_json_data()
         self.assertEqual(filecmp.cmp(TEST_DB_PATH, "test_cases/test_download_result.json"), True)
     
     def test_csv_download(self):
-        format_handler = FormatHandler("csv", "test_cases/test_download.csv")
-        format_handler.set_db_path(TEST_DB_PATH)
+        format_handler = FormatHandler("csv", "test_cases/test_download.csv", TEST_DB_PATH, SUPPORTED_RECORDS)
         format_handler.download_json_data()
         self.assertEqual(filecmp.cmp(TEST_DB_PATH, "test_cases/test_download.json"), True)
     
     def test_xml_download(self):
-        format_handler = FormatHandler("csv", "test_cases/test_download.xml")
-        format_handler.set_db_path(TEST_DB_PATH)
+        format_handler = FormatHandler("xml", "test_cases/test_download.xml", TEST_DB_PATH, SUPPORTED_RECORDS)
         format_handler.download_json_data()
         self.assertEqual(filecmp.cmp(TEST_DB_PATH, "test_cases/test_download.json"), True)
 
     def test_yaml_download(self):
-        format_handler = FormatHandler("csv", "test_cases/test_download.xml")
-        format_handler.set_db_path(TEST_DB_PATH)
+        format_handler = FormatHandler("xml", "test_cases/test_download.yaml", TEST_DB_PATH, SUPPORTED_RECORDS)
         format_handler.download_json_data()
         self.assertEqual(filecmp.cmp(TEST_DB_PATH, "test_cases/test_download.json"), True)
 
