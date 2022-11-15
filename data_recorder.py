@@ -4,17 +4,14 @@
 
 #!/usr/bin/env python
 
-import json
-import xml.etree.ElementTree as ET
-
 import os
-import sys
+import json
 import argparse
-from collections import OrderedDict
+from colorama import Fore
+import xml.etree.ElementTree as ET
 from tabulate import tabulate
 from jinja2 import Template
-
-import sqlite3
+from collections import OrderedDict
 
 from data_handler import FormatHandler, DataRecord
 
@@ -31,6 +28,9 @@ SUPPORT_EMAIL_ALIAS = "data-recorder-help@gmail.com"
 AUTHORS = ["Su Sengupta"]
 HTML_DISPLAY_PATH = "main.html"
 
+FILE_FORMAT_ERROR_MSG =  Fore.RED + "This file format is not supported currently. Please contact [%s] to request for a new format." % SUPPORT_EMAIL_ALIAS + Fore.RESET
+FILE_OFFLINE_MSG = Fore.RED + "appears to be offline." + Fore.RESET
+FILE_CORRUPT_MSG = Fore.RED + "ERROR: db might be corrupted, please contact %s." % SUPPORT_EMAIL_ALIAS + Fore.RESET
 
 def add_data():
     '''
@@ -42,12 +42,12 @@ def add_data():
     
     if total_entries.isnumeric():
         if DB_SIZE + int(total_entries) > 100:
-            print ("Sorry, that exceeds our upper limit of %s entries. Please try again." % (DB_CAPACITY))
+            print (Fore.RED +  "ERROR: Sorry, that exceeds our upper limit of %s entries. Please try again." % (DB_CAPACITY) + Fore.RESET)
         else:
             print ("Adding a new batch of [%s] entries:" % total_entries)
             add_data_entries(int(total_entries))
     else:
-        print ("Please enter a valid option for number of entries.")
+        print (Fore.RED + "ERROR: Please enter a valid option for number of entries." + Fore.RESET)
     return
 
 
@@ -143,7 +143,7 @@ def push_to_db(data_entries):
             with open(DB_PATH) as filehandler:
                 existing_data = json.load(filehandler) or {"data_records": []}
         except json.decoder.JSONDecodeError:
-            print ("DB might be corrupted, please check with [%s]." % SUPPORT_EMAIL_ALIAS)
+            print (FILE_CORRUPT_MSG)
 
     if existing_data.get("data_records") or data_entries:
         existing_data.get("data_records").extend(data_entries)
@@ -162,13 +162,13 @@ def pull_from_db():
     '''
     existing_data = {"data_records": []}
     if not os.path.exists(DB_PATH):
-        print ("%s appears to be offline. Cannot display any data." % DB_PATH)
+        print ("[%s] " % DB_PATH + FILE_OFFLINE_MSG)
         return
     try:
         with open(DB_PATH) as filehandler:
             existing_data = json.load(filehandler)
     except json.decoder.JSONDecodeError:
-        print ("DB might be corrupted, please check with [%s]." % SUPPORT_EMAIL_ALIAS)
+        print (FILE_CORRUPT_MSG)
     return existing_data
 
 
@@ -180,14 +180,14 @@ def search_data():
     '''
     existing_data = pull_from_db()
     if not existing_data:
-        print ("There are no data records in the DB to display. Exiting.")
+        print (Fore.RED + "There are no data records in the DB to display. Exiting." + Fore.RESET)
         return
     data_records = existing_data.get("data_records")
 
     # More features: starting with, ends with, contains
     search_field = input("Which of the following fields would you like to use for searching: %s" % SUPPORTED_RECORDS)
     if search_field.lower() not in SUPPORTED_RECORDS:
-        print ("The field [%s] does not exist in our records. Please contact [%s] if you'd like to add a new field or try again." % (search_field, SUPPORT_EMAIL_ALIAS))
+        print (Fore.RED + "The field [%s] does not exist in our records. Please contact [%s] if you'd like to add a new field or try again." % (search_field, SUPPORT_EMAIL_ALIAS) + Fore.RESET)
         return
     search_value = input("What %s would you like to search for: " % search_field)
 
@@ -282,7 +282,7 @@ def display_html():
     html_file.write(html_template)
     html_file.close()
 
-    print ("Data Records have been stored to: %s" % os.path.abspath(HTML_DISPLAY_PATH))
+    print (Fore.GREEN + "Data Records have been stored to: %s" % os.path.abspath(HTML_DISPLAY_PATH) + Fore.RESET)
 
 
 def convert_data():
@@ -300,11 +300,11 @@ def convert_data():
     dest_ext = dest_ext.split(".")[-1] # remove '.' from extension
 
     if not os.path.exists(src):
-        print ("%s does not exist on disk, please try another path.")
+        print ("[%s] " % src + FILE_OFFLINE_MSG)
         return
 
     if src_ext not in SUPPORTED_FORMATS:
-        print ("This file format is not supported currently. Please contact [%s] to request for a new format." % SUPPORT_EMAIL_ALIAS)
+        print (FILE_FORMAT_ERROR_MSG)
     else:
         print ("Converting data from: %s..." % src)
         formathandler = FormatHandler(src_ext, src, CONVERT_PATH, SUPPORTED_RECORDS)
@@ -314,11 +314,11 @@ def convert_data():
         formathandler.upload()
 
     if dest_ext not in SUPPORTED_FORMATS:
-        print ("This file format is not supported currently. Please contact [%s] to request for a new format." % SUPPORT_EMAIL_ALIAS)
+        print (FILE_FORMAT_ERROR_MSG)
     else:
         formathandler = FormatHandler(dest_ext, dest, CONVERT_PATH, SUPPORTED_RECORDS)
         if not os.path.exists(CONVERT_PATH):
-            print ("Error: Source file not uploaded correctly. Exiting.")
+            print (Fore.RED + "Error: Source file not uploaded correctly. Exiting." + Fore.RESET)
             return
         formathandler.download()
 
@@ -332,11 +332,11 @@ def upload_data():
     src_ext = src_ext.split(".")[-1] # remove '.' from extension
 
     if not os.path.exists(src):
-        print ("The filepath [%s] does not exist, please try again." % src)
+        print ("[%s] " % src + FILE_OFFLINE_MSG)
         return
 
     if src_ext not in SUPPORTED_FORMATS:
-        print ("Source file format is not supported currently. Please contact [%s] to request for a new format." % SUPPORT_EMAIL_ALIAS)
+        print (FILE_FORMAT_ERROR_MSG)
     else:
         print ("Uploading data from: %s..." % src)
         formathandler = FormatHandler(src_ext, src, DB_PATH, SUPPORTED_RECORDS)
@@ -352,7 +352,7 @@ def download_data():
     dest_ext = dest_ext.split(".")[-1] # remove '.' from extension
 
     if dest_ext not in SUPPORTED_FORMATS:
-        print ("This file format is not supported currently. Please contact [%s] to request for a new format." % SUPPORT_EMAIL_ALIAS)
+        print (FILE_FORMAT_ERROR_MSG)
     else:
         print ("Downloading data to: %s..." % dest)
         formathandler = FormatHandler(dest_ext, dest, DB_PATH, SUPPORTED_RECORDS)
@@ -363,10 +363,10 @@ def display_info():
     '''
     Displays some information about the tool.
     '''
-    print ("Once new entries are added or uploaded, they will be stored in a file called 'main.json'.\n")
-    print ("Currently, the following formats are supported for uploads/downloads: %s" % SUPPORTED_FORMATS)
-    print ("This tool is written and maintained by: %s" % AUTHORS)
-    print ("If you have any queries, please contact: [%s]" % SUPPORT_EMAIL_ALIAS)
+    print ("Once new entries are added or uploaded, they will be stored in a file called " + Fore.CYAN + "'./main.json'." + Fore.RESET)
+    print ("Currently, the following formats are supported for uploads/downloads: " + Fore.CYAN + "%s" % SUPPORTED_FORMATS + Fore.RESET)
+    print ("This tool is written and maintained by: " + Fore.MAGENTA + "%s" % AUTHORS + Fore.RESET)
+    print ("If you have any queries, please contact: "+ Fore.MAGENTA + "[%s]\n" % SUPPORT_EMAIL_ALIAS + Fore.RESET)
 
 
 def create_db():
@@ -410,8 +410,9 @@ def parse_args():
 
 
 def main():
-    print ("\n***Welcome to Data Recorder!***\n\nThis tool will help you store records for Employees that include: %s" % SUPPORTED_RECORDS)
-    print ("Curently, Data Recorder supports the following functions: %s\n" % FUNCTIONS)
+    print (Fore.CYAN + "\n***Welcome to Data Recorder!***\n\n" + Fore.RESET)
+    print ("This tool will help you store records for Employees that include:" + Fore.CYAN + " %s" % SUPPORTED_RECORDS + Fore.RESET)
+    print ("Curently, Data Recorder supports the following functions: " + Fore.MAGENTA + "%s\n" % FUNCTIONS + Fore.RESET)
     args = parse_args()
 
     create_db()

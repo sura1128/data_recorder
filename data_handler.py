@@ -7,11 +7,17 @@ import csv
 import yaml
 from bs4 import BeautifulSoup
 import xml.etree.ElementTree as ET
+from colorama import Fore
 
 import os
 import argparse
 import re
 from collections import OrderedDict
+
+SUPPORT_EMAIL_ALIAS = "data-recorder-help@gmail.com"
+FILE_OFFLINE_MSG = Fore.RED + "appears to be offline." + Fore.RESET
+FILE_CORRUPT_MSG = Fore.RED + "ERROR: db might be corrupted, please contact %s." % SUPPORT_EMAIL_ALIAS + Fore.RESET
+FORMAT_ERROR_MSG = Fore.RED + "ERROR: Please follow the right format for data upload. Refer to: " + Fore.RESET
 
 class DataRecord:
     """
@@ -123,7 +129,7 @@ class FormatHandler:
                     existing_data = json.load(filehandler) or {"data_records": []}
                     data_entries = self.remove_duplicates(existing_data, data_entries)
             except json.decoder.JSONDecodeError:
-                print ("DB might be corrupted, please check with support team.")
+                print (FILE_CORRUPT_MSG)
 
         if existing_data.get("data_records") or data_entries:
             existing_data.get("data_records").extend(data_entries)
@@ -152,7 +158,7 @@ class FormatHandler:
             if entry.get("id") not in data_record_ids:
                 new_data_entries.append(entry)
             else:
-                print ("Duplicate ID: [%s]. This entry will be skipped." % entry.get("id"))
+                print (Fore.YELLOW + "WARNING: Duplicate ID: [%s]. This entry will be skipped." % entry.get("id") + Fore.RESET)
         return new_data_entries
 
     def upload_json_data(self):
@@ -165,7 +171,7 @@ class FormatHandler:
             try:
                 upload_entries = upload_data.get("data_records")
             except:
-                print ("Please follow the right format for data upload. Refer to: example.%s" % self._file_format)
+                print (FORMAT_ERROR_MSG + "example.%s" % self._file_format)
         data_entries = []
         for entry in upload_entries:
             data_entry = self.get_data_record(entry.get("id"), entry.get("name"),
@@ -185,14 +191,14 @@ class FormatHandler:
             for row in csvreader:
                 rows.append(row)
         if not self.validate_header(header):
-            print ("Please follow the right format for data upload. Refer to: example.%s" % self._file_format)
+            print (FORMAT_ERROR_MSG + "example.%s" % self._file_format)
             return
         else:
             for entry in rows:
                 try:
                     data_entry = self.get_data_record(entry[0], entry[1], entry[2], entry[3]).to_dict()
                 except IndexError:
-                    print ("CSV entry %s is missing a field. Skipping it." % entry)
+                    print (Fore.YELLOW + "WARNING: CSV entry %s is missing a field. Skipping it." % entry + Fore.RESET)
                     continue
                 upload_entries.append(data_entry)
             self.push_to_db(upload_entries)
@@ -218,7 +224,7 @@ class FormatHandler:
             except yaml.YAMLError as e:
                 print (e)
         if not data.get("data_records"):
-            print ("Please follow the right format for data upload. Refer to: example.%s" % self._file_format)
+            print (FORMAT_ERROR_MSG + "example.%s" % self._file_format)
         else:
             data_records = data.get("data_records")
             ordered_data_records = OrderedDict([(key, data_records[key]) for key in data_records])
@@ -238,7 +244,7 @@ class FormatHandler:
         bs_data = BeautifulSoup(data, "xml")
         data_records = bs_data.find_all("data_records")
         if not data_records:
-            print ("Please follow the right format for data upload. Refer to: example.%s" % self._file_format)
+            print (FORMAT_ERROR_MSG + "example.%s" % self._file_format)
         else:
             data_records = bs_data.find_all("employee")
             for entry in data_records:
@@ -279,7 +285,7 @@ class FormatHandler:
             with open(self._db_path) as filehandler:
                 existing_data = json.load(filehandler)
         except json.decoder.JSONDecodeError:
-            print ("DB might be corrupted, please check with support team.")
+            print (FILE_CORRUPT_MSG)
         return existing_data
     
     def download_json_data(self):
