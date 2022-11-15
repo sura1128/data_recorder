@@ -46,9 +46,9 @@ def add_data():
         else:
             print ("Adding a new batch of [%s] entries:" % total_entries)
             add_data_entries(int(total_entries))
+            print (Fore.GREEN + "Entries have been added successfully." + Fore.RESET)
     else:
         print (Fore.RED + "ERROR: Please enter a valid option for number of entries." + Fore.RESET)
-    return
 
 
 def get_DB_size():
@@ -185,7 +185,7 @@ def search_data():
     data_records = existing_data.get("data_records")
 
     # More features: starting with, ends with, contains
-    search_field = input("Which of the following fields would you like to use for searching: %s" % SUPPORTED_RECORDS)
+    search_field = input("Which of the following fields would you like to use for searching (%s): " % SUPPORTED_RECORDS)
     if search_field.lower() not in SUPPORTED_RECORDS:
         print (Fore.RED + "The field [%s] does not exist in our records. Please contact [%s] if you'd like to add a new field or try again." % (search_field, SUPPORT_EMAIL_ALIAS) + Fore.RESET)
         return

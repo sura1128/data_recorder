@@ -71,6 +71,18 @@
             "name": "Claire Foy",
             "address": "Block 21 Crown Avenue London  126998",
             "phone": "2372373007"
+        },
+        {
+            "id": "378",
+            "name": "Wanda",
+            "address": "453612 Witch Avenue  Salem  USA",
+            "phone": "726378126"
+        },
+        {
+            "id": "356",
+            "name": "Juliet R",
+            "address": "278 Shakespeare Park  Glasgow  UK",
+            "phone": "25382153"
         }
     ]
 }
