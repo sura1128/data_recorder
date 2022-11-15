@@ -16,23 +16,26 @@ import sys
 import argparse
 from collections import OrderedDict
 from tabulate import tabulate
+from jinja2 import Template
 
 import sqlite3
 
 from data_handler import FormatHandler, DataRecord
 
 DB_PATH = "./main.json"
+CONVERT_PATH = "./convert.json"
 DB_CAPACITY = 100
 DEFAULT_FORMAT = "json"
 SUPPORTED_FORMATS = ["json", "csv", "yaml", "xml"]
 
-FUNCTIONS = ["add", "upload", "download", "search", "display"]
+FUNCTIONS = ["add", "upload", "download", "search", "display", "convert", "info"]
 SUPPORTED_RECORDS = ["id", "name", "address", "phone"]
 
 SUPPORT_EMAIL_ALIAS = "data-recorder-help@gmail.com"
+HTML_DISPLAY_PATH = "main.html"
 
 def add_data():
-    # Should there be an upper limit? going to assume our DB can't take more than 100 entries as an example.
+    # upper limit of 100 entries as an example.
     DB_SIZE = get_DB_size()
     total_entries = input("Currently, we have [%s] slots left in our DB. Please type the number of entries you'd like to add today.\n" % (DB_CAPACITY - DB_SIZE))
     
@@ -120,20 +123,6 @@ def connect_to_db():
     cursor = conn.cursor()
     return cursor
 
-# def push_to_database(data_entries):
-#     cursor = connect_to_db()
-#     for entry in data_entries:
-#         db_entry = []
-#         for field in SUPPORTED_RECORDS:
-#             db_entry.append(entry.get(field))
-#         print (tuple(db_entry))
-#         c.execute('''
-#           INSERT INTO employee_records (n_id, name, address, phone)
-
-#                 VALUES
-#                 ?
-#           ''')
-
 
 def search_data():
     existing_data = pull_from_db()
@@ -169,7 +158,7 @@ def search_data():
 
 def display_data():
     existing_data = pull_from_db()
-    if not existing_data:
+    if not existing_data or not existing_data.get("data_records"):
         print ("There are no data records in the DB to display. Exiting.")
         return
     data_records = existing_data.get("data_records")
@@ -178,6 +167,80 @@ def display_data():
         tabular_list.append(entry.values())
     print(tabulate(tabular_list,  headers=SUPPORTED_RECORDS, tablefmt='orgtbl'))
     print("\n")
+
+def display_html():
+    existing_data = pull_from_db()
+    if not existing_data or not existing_data.get("data_records"):
+        print ("There are no data records in the DB to display. Exiting.")
+        return
+    data_records = existing_data.get("data_records")
+
+    html_template = """<html>
+    <link rel="stylesheet" href="styles.css">
+    <head>
+    <title>Employee Records</title>
+    </head>
+    <body>
+    <table>
+    <tr>
+        <th> ID </th>
+        <th> Name </th>
+        <th> Address </th>
+        <th> Phone Number </th>
+    </tr>
+        {% for entry in data_records%}
+            <tr>
+                <td> {{entry.get('id')}} </td>
+                <td> {{entry.get('name')}} </td>
+                <td> {{entry.get('address')}} </td>
+                <td> {{entry.get('phone')}} </td>
+            </tr>
+        {%  endfor %}
+    </table>
+    
+    </body>
+    </html>
+    """
+    html_template = Template(html_template).render(data_records=data_records)
+    html_file = open(HTML_DISPLAY_PATH, "w+")
+    html_file.write(html_template)
+    html_file.close()
+
+    print ("Data Records have been stored to: %s" % os.path.abspath(HTML_DISPLAY_PATH))
+
+
+def convert_data():
+    src = input("Please provide the full path to the source file i.e. the file you would like to convert: ")
+    dest = input("Please provide the destination filepath: ")
+    src_name, src_ext = os.path.splitext(src)
+    src_ext = src_ext.split(".")[-1] # remove '.' from extension
+    dest_name, dest_ext = os.path.splitext(dest)
+    dest_ext = dest_ext.split(".")[-1] # remove '.' from extension
+
+    if not os.path.exists(src):
+        print ("%s does not exist on disk, please try another path.")
+        return
+
+    if src_ext not in SUPPORTED_FORMATS:
+        print ("This file format is not supported currently. Please contact [%s] to request for a new format." % SUPPORT_EMAIL_ALIAS)
+    else:
+        print ("Converting data from: %s..." % src)
+        formathandler = FormatHandler(src_ext, src)
+        
+        with open(CONVERT_PATH, 'w+') as filehandler:
+           json.dump({"data_records": []}, filehandler, indent=4)
+        formathandler.set_db_path(CONVERT_PATH)
+        formathandler.upload()
+
+    if dest_ext not in SUPPORTED_FORMATS:
+        print ("This file format is not supported currently. Please contact [%s] to request for a new format." % SUPPORT_EMAIL_ALIAS)
+    else:
+        formathandler = FormatHandler(dest_ext, dest)
+        if not os.path.exists(CONVERT_PATH):
+            print ("Error: Source file not uploaded correctly. Exiting.")
+            return
+        formathandler.set_db_path(CONVERT_PATH)
+        formathandler.download()
 
 
 def upload_data():
@@ -190,7 +253,7 @@ def upload_data():
         return
 
     if src_ext not in SUPPORTED_FORMATS:
-        print ("This file format is not supported currently. Please contact [%s] to request for a new format." % SUPPORT_EMAIL_ALIAS)
+        print ("Source file format is not supported currently. Please contact [%s] to request for a new format." % SUPPORT_EMAIL_ALIAS)
     else:
         print ("Uploading data from: %s..." % src)
         formathandler = FormatHandler(src_ext, src)
@@ -198,8 +261,6 @@ def upload_data():
 
 
 def download_data():
-    print ("Downloading data...")
-
     dest = input("Please provide the full path to the destination file for downloading data (eg. my_dir/path_to_file.csv): ")
     dest_name, dest_ext = os.path.splitext(dest)
     dest_ext = dest_ext.split(".")[-1] # remove '.' from extension
@@ -211,16 +272,27 @@ def download_data():
         formathandler = FormatHandler(dest_ext, dest)
         formathandler.download()
 
+def display_info():
+    print ("Once new entries are added or uploaded, they will be stored in a file called 'main.json'.\n")
+    print ("Currently, the following formats are supported for uploads/downloads: %s" % SUPPORTED_FORMATS)
+    print ("If you have any queries, please contact: [%s]" % SUPPORT_EMAIL_ALIAS)
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help="commands", dest="command")
     
-    add_parser = subparsers.add_parser("add", help="manually add entry/entries to data recorder")
-    upload_parser = subparsers.add_parser("upload", help="upload serialized data into data recorder")
-    download_parser = subparsers.add_parser("download", help="download entries from data recorder into another format")
-    search_parser = subparsers.add_parser("search", help="search for entries in data recorder")
-    display_parser = subparsers.add_parser("display", help="display entries in data recorder")
+    add_parser = subparsers.add_parser("add", help="manually add entry/entries")
+    upload_parser = subparsers.add_parser("upload", help="upload serialized data of any supported format, eg. uploads.csv")
+    download_parser = subparsers.add_parser("download", help="download entries into a supported format, eg. uploads.json")
+    search_parser = subparsers.add_parser("search", help="search for entries by field")
+    display_parser = subparsers.add_parser("display", help="display all existing entries in html or text format")
+    convert_parser = subparsers.add_parser("convert", help="convert a source file into a supported destination file format")
+    info_parser = subparsers.add_parser("info", help="display info about data recorder")
+
+    d_subparsers = display_parser.add_subparsers(help="subcommands", dest="d_subcmds")
+    html_parser  = d_subparsers.add_parser("html", help="display the output in html format.")
+    text_parser = d_subparsers.add_parser("text", help="display the output in text.")
 
     options = parser.parse_args()
     return options
@@ -241,7 +313,6 @@ def create_db():
 def main():
     print ("\n***Welcome to Data Recorder!***\n\nThis tool will help you store records for Employees that include: %s" % SUPPORTED_RECORDS)
     print ("Curently, Data Recorder supports the following functions: %s\n" % FUNCTIONS)
-    print ("Note: all entries will be stored in a database called 'main' by default unless otherwise specified.\n")
     args = parse_args()
 
     create_db()
@@ -251,12 +322,18 @@ def main():
     elif args.command == "search":
         search_data()
     elif args.command == "display":
-        display_data()
+        if args.d_subcmds == "html":
+            display_html()
+        else:
+            display_data()  
     elif args.command == "upload":
         upload_data()
     elif args.command == "download":
         download_data()
+    elif args.command == "convert":
+        convert_data()
+    elif args.command == "info":
+        display_info()
 
 
-if __name__ == '__main__':
-    main()
+main()

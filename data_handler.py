@@ -79,6 +79,9 @@ class FormatHandler:
         self._db_path = "./main.json"
         self._supported_records = ["id", "name", "address", "phone"]
     
+    def set_db_path(self, db_path):
+        self._db_path = db_path
+    
     def upload(self):
         func_name = "self.upload_%s_data()" % (self._file_format)
         exec(func_name)
@@ -87,14 +90,24 @@ class FormatHandler:
         existing_data = []
         with open(self._db_path) as filehandler:
             existing_data = json.load(filehandler)
-            # data_entries = self.remove_duplicates(existing_data, data_entries)
+            data_entries = self.remove_duplicates(existing_data, data_entries)
             existing_data.get("data_records").extend(data_entries)
         with open(self._db_path, 'w') as filehandler:
             json.dump(existing_data, filehandler, indent=4)
     
     def remove_duplicates(self, existing_data, data_entries):
-        # kinda brute force right now, is there a way to  optimize this?
         data_records = existing_data.get("data_records")
+        data_record_ids = []
+        # get all IDs, future idea - cache these somewhere?
+        for record in data_records:
+            data_record_ids.append(record.get("id"))
+        new_data_entries = []
+        for entry in data_entries:
+            if entry.get("id") not in data_record_ids:
+                new_data_entries.append(entry)
+            else:
+                print ("Duplicate ID: [%s]. This entry will be skipped." % entry.get("id"))
+        return new_data_entries
 
     def upload_json_data(self):
         with open(self._file_path) as filehandler:
@@ -103,8 +116,7 @@ class FormatHandler:
                 upload_entries = upload_data.get("data_records")
             except:
                 print ("Please follow the right format for data upload. Refer to: example.%s" % self._file_format)
-            # Some way to validate the entries? check for duplicates?
-            self.push_to_db(upload_entries)
+        self.push_to_db(upload_entries)
 
     def upload_csv_data(self):
         rows = []
@@ -116,6 +128,7 @@ class FormatHandler:
                 rows.append(row)
         if not self.validate_header(header):
             print ("Please follow the right format for data upload. Refer to: example.%s" % self._file_format)
+            return
         else:
             for entry in rows:
                 data_entry = {}
@@ -123,7 +136,6 @@ class FormatHandler:
                     data_entry[self._supported_records[index]] = entry[index].replace('"', '').strip()
                 upload_entries.append(data_entry)
             self.push_to_db(upload_entries)
-
 
     def validate_header(self, header):
         formatted_headers = [h.lower().replace('"', '').strip() for h in header]
@@ -182,8 +194,6 @@ class FormatHandler:
     def download_json_data(self):
         # error handling needed
         data_records = self.pull_from_db()
-        # print ("TEST %s" % self._file_path)
-        # print (data_records)
         with open(self._file_path, 'w', encoding='utf-8') as f:
             json.dump(data_records, f, ensure_ascii=False, indent=4)
     
