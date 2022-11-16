@@ -5,6 +5,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import json
 import argparse
 from colorama import Fore
@@ -57,12 +58,16 @@ def get_DB_size():
         -------
         db_size(int): Number of total entries in the db.
     '''
+    empty_db = 0
     try:
         db_data = open(DB_PATH)
     except:
         print ("unable to read DB")
-        return 0
+        return empty_db
+
     data_records = json.load(db_data)
+    if not data_records:
+        return empty_db
     db_size = len(data_records.get("data_records"))
     return db_size
 
@@ -84,6 +89,12 @@ def add_data_entries(total_entries):
             n_id = input("Enter the id: ")
             if is_duplicate(n_id):
                 print ("This ID already exists in our data records. ID is unique for each entry so please re-enter this.")
+                continue
+            elif not n_id:
+                print ("Please provide an id to proceed.")
+                continue
+            elif n_id.isalpha():
+                print ("An id needs to be numeric, please try again.")
                 continue
             else:
                 break
@@ -114,8 +125,8 @@ def is_duplicate(n_id):
     '''
     existing_data = pull_from_db()
     if not existing_data:
-        print ("There are no data records in the DB to display. Exiting.")
         return
+
     data_records = existing_data.get("data_records")
     for record in data_records:
         if str(n_id) == record.get("id"):
@@ -164,6 +175,7 @@ def pull_from_db():
     if not os.path.exists(DB_PATH):
         print ("[%s] " % DB_PATH + FILE_OFFLINE_MSG)
         return
+
     try:
         with open(DB_PATH) as filehandler:
             existing_data = json.load(filehandler)
@@ -232,6 +244,7 @@ def display_text():
     if not existing_data or not existing_data.get("data_records"):
         print ("There are no data records in the DB to display. Exiting.")
         return
+
     data_records = existing_data.get("data_records")
     tabular_list = []
     for entry in data_records:
@@ -249,8 +262,8 @@ def display_html():
     if not existing_data or not existing_data.get("data_records"):
         print ("There are no data records in the DB to display. Exiting.")
         return
-    data_records = existing_data.get("data_records")
 
+    data_records = existing_data.get("data_records")
     html_template = """<html>
     <link rel="stylesheet" href="styles.css">
     <head>
@@ -307,10 +320,12 @@ def convert_data():
         print (FILE_FORMAT_ERROR_MSG)
     else:
         print ("Converting data from: %s..." % src)
+        # clear out convert.json file
+        if os.path.exists(CONVERT_PATH):
+            with open(CONVERT_PATH, 'w+') as filehandler:
+                json.dump({"data_records": []}, filehandler, indent=4)
+
         formathandler = FormatHandler(src_ext, src, CONVERT_PATH, SUPPORTED_RECORDS)
-        
-        # with open(CONVERT_PATH, 'w+') as filehandler:
-        #    json.dump({"data_records": []}, filehandler, indent=4)
         formathandler.upload()
 
     if dest_ext not in SUPPORTED_FORMATS:
@@ -378,12 +393,13 @@ def create_db():
     if not os.path.exists(DB_PATH):
         with open(DB_PATH, 'w') as filehandler:
             json.dump({"data_records": []}, filehandler, indent=4)
+
     try:
         with open(DB_PATH) as filehandler:
             json.load(filehandler)
     except json.decoder.JSONDecodeError:
-        with open(DB_PATH, 'w') as filehandler:
-            json.dump({"data_records": []}, filehandler, indent=4)
+        print (FILE_CORRUPT_MSG)
+        sys.exit()
 
 
 def parse_args():

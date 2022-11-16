@@ -1,88 +1,28 @@
 {
     "data_records": [
         {
-            "id": "23",
-            "name": "Thor",
-            "address": "Block 145 Earth NYC - 126979",
-            "phone": "2363127633333"
-        },
-        {
-            "id": "34",
-            "name": "Hawkeye",
-            "address": "174 Bird Lane LA - 126990",
-            "phone": "236333336"
-        },
-        {
-            "id": "43",
-            "name": "John Smith",
-            "address": "123 Highgate Grove Singapore - 323244",
-            "phone": "34323434"
-        },
-        {
-            "id": "222",
-            "name": "Bugs Bunny",
-            "address": "Rabbit Hole London - 232323",
-            "phone": "87263162363"
-        },
-        {
             "id": "55",
             "name": "Dudley Dursley",
-            "address": "27 Privet Drive Surrey UK  12681",
+            "address": "27 Privet Drive Surrey  UK   12681",
             "phone": "125182523"
         },
         {
             "id": "64",
             "name": "Petunia Dursley",
-            "address": "27 Privet Drive Surrey UK  12681",
+            "address": "27 Privet Drive Surrey  UK   12681",
             "phone": "37825387"
         },
         {
             "id": "65",
             "name": "Vernon Dursley",
-            "address": "27 Privet Drive Surrey UK  12681",
+            "address": "27 Privet Drive Surrey  UK   12681",
             "phone": "72368232"
         },
         {
             "id": "25",
             "name": "Severus Snape",
-            "address": "Hogwarts Scotland UK  273528",
+            "address": "Hogwarts Scotland UK   273528",
             "phone": "273812326"
-        },
-        {
-            "id": "8",
-            "name": "Jane Smith",
-            "address": "24 Rudolph Avenue Singapore  123658",
-            "phone": "7653826383"
-        },
-        {
-            "id": "99",
-            "name": "Mary Shelley",
-            "address": "Block 37 Frankenstein Avenue London  126998",
-            "phone": "1290120208"
-        },
-        {
-            "id": "7",
-            "name": "Matt Smith",
-            "address": "32 Crown Lane Singapore  123658",
-            "phone": "232321232"
-        },
-        {
-            "id": "67",
-            "name": "Claire Foy",
-            "address": "Block 21 Crown Avenue London  126998",
-            "phone": "2372373007"
-        },
-        {
-            "id": "378",
-            "name": "Wanda",
-            "address": "453612 Witch Avenue  Salem  USA",
-            "phone": "726378126"
-        },
-        {
-            "id": "356",
-            "name": "Juliet R",
-            "address": "278 Shakespeare Park  Glasgow  UK",
-            "phone": "25382153"
         }
     ]
 }

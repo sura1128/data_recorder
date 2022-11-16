@@ -16,8 +16,11 @@ from collections import OrderedDict
 
 SUPPORT_EMAIL_ALIAS = "data-recorder-help@gmail.com"
 FILE_OFFLINE_MSG = Fore.RED + "appears to be offline." + Fore.RESET
-FILE_CORRUPT_MSG = Fore.RED + "ERROR: db might be corrupted, please contact %s." % SUPPORT_EMAIL_ALIAS + Fore.RESET
-FORMAT_ERROR_MSG = Fore.RED + "ERROR: Please follow the right format for data upload. Refer to: " + Fore.RESET
+DB_CORRUPT_MSG = Fore.RED + "ERROR: db might be corrupted, please contact %s." % SUPPORT_EMAIL_ALIAS + Fore.RESET
+FILE_CORRUPT_MSG = Fore.RED + "ERROR: file might be corrupted, please check the contents and try again." + Fore.RESET
+FORMAT_ERROR_MSG = Fore.RED + "ERROR: Please follow the right format for data upload. Refer to: " + Fore.RESET + "examples/"
+EMPTY_FILE_MSG = Fore.YELLOW + "WARNING: The file appears to be empty." + Fore.RESET
+MISSING_ID_MSG =  Fore.YELLOW + "WARNING: no ID specified, skipping this entry." + Fore.RESET
 
 class DataRecord:
     """
@@ -126,10 +129,10 @@ class FormatHandler:
         else:
             try:
                 with open(self._db_path) as filehandler:
-                    existing_data = json.load(filehandler) or {"data_records": []}
+                    existing_data = json.load(filehandler)  or {"data_records": []}
                     data_entries = self.remove_duplicates(existing_data, data_entries)
             except json.decoder.JSONDecodeError:
-                print (FILE_CORRUPT_MSG)
+                print(DB_CORRUPT_MSG)
 
         if existing_data.get("data_records") or data_entries:
             existing_data.get("data_records").extend(data_entries)
@@ -166,14 +169,22 @@ class FormatHandler:
         Uploads data from .json file to db.
         '''
         upload_entries = []
-        with open(self._file_path) as filehandler:
-            upload_data = json.load(filehandler)
-            try:
+        try:
+            with open(self._file_path) as filehandler:
+                upload_data = json.load(filehandler)
                 upload_entries = upload_data.get("data_records")
-            except:
-                print (FORMAT_ERROR_MSG + "example.%s" % self._file_format)
+        except json.decoder.JSONDecodeError:
+            print (FILE_CORRUPT_MSG)
+            return
+        if not upload_entries:
+            print (EMPTY_FILE_MSG)
+            return
+
         data_entries = []
         for entry in upload_entries:
+            if not entry.get("id"):
+                print (MISSING_ID_MSG + "%s" % entry)
+                continue
             data_entry = self.get_data_record(entry.get("id"), entry.get("name"),
                 entry.get("address"), entry.get("phone")).to_dict()
             data_entries.append(data_entry)
@@ -185,17 +196,28 @@ class FormatHandler:
         '''
         rows = []
         upload_entries = []
-        with open(self._file_path, 'r') as filehandler:
-            csvreader = csv.reader(filehandler)
-            header = next(csvreader)
-            for row in csvreader:
-                rows.append(row)
+        try:
+            with open(self._file_path, 'r') as filehandler:
+                csvreader = csv.reader(filehandler)
+                header = next(csvreader)
+                for row in csvreader:
+                    rows.append(row)
+        except StopIteration:
+            print (EMPTY_FILE_MSG)
+            return
+        if not rows:
+            print (EMPTY_FILE_MSG)
+            return
+
         if not self.validate_header(header):
             print (FORMAT_ERROR_MSG + "example.%s" % self._file_format)
             return
         else:
             for entry in rows:
                 try:
+                    if not entry[0].isnumeric():
+                        print (MISSING_ID_MSG + " %s" % entry)
+                        continue
                     data_entry = self.get_data_record(entry[0], entry[1], entry[2], entry[3]).to_dict()
                 except IndexError:
                     print (Fore.YELLOW + "WARNING: CSV entry %s is missing a field. Skipping it." % entry + Fore.RESET)
@@ -222,7 +244,11 @@ class FormatHandler:
             try:
                 data = yaml.safe_load(filehandler)
             except yaml.YAMLError as e:
-                print (e)
+                print (FILE_CORRUPT_MSG)
+        if not data:
+            print (EMPTY_FILE_MSG)
+            return
+
         if not data.get("data_records"):
             print (FORMAT_ERROR_MSG + "example.%s" % self._file_format)
         else:
@@ -242,12 +268,18 @@ class FormatHandler:
         with open(self._file_path, 'r') as filehandler:
             data = filehandler.read()
         bs_data = BeautifulSoup(data, "xml")
+
         data_records = bs_data.find_all("data_records")
         if not data_records:
             print (FORMAT_ERROR_MSG + "example.%s" % self._file_format)
         else:
             data_records = bs_data.find_all("employee")
+            if not data_records:
+                print (EMPTY_FILE_MSG)
             for entry in data_records:
+                if not entry.get("id"):
+                    print (MISSING_ID_MSG + " %s" % entry)
+                    continue
                 entry_dict = self.get_data_record(entry.get('id'), entry.get('name'),
                     entry.get('address'), entry.get('phone')).to_dict()
                 upload_entries.append(entry_dict)
@@ -285,7 +317,9 @@ class FormatHandler:
             with open(self._db_path) as filehandler:
                 existing_data = json.load(filehandler)
         except json.decoder.JSONDecodeError:
-            print (FILE_CORRUPT_MSG)
+            print (DB_CORRUPT_MSG)
+        if not existing_data or not existing_data.get("data_records"):
+            print (Fore.YELLOW + "WARNING: DB is empty." + Fore.RESET)
         return existing_data
     
     def download_json_data(self):
