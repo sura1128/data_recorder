@@ -65,3 +65,9 @@ Data Recorder is not using a database at the moment. Instead, it stores all info
 into a .json file called main.json which is located in the same folder as the tool itself.
 
 In the future, we can try moving to an sqlite3 database to store and index the records.
+
+Right now, adding is the only function possible. However, the following features can be explored:
+- updating an existing record
+- deleting an existing record
+- an API to add new fields
+- an API to add new formats
