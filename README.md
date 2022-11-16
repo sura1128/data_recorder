@@ -16,9 +16,10 @@ The tool currently supports the following different functionalities:
 - displaying data records (text/html)
 </p>
 
+<br>
 <h3> Installation and Usage </h3>
-Clone the repository using the link - 
-```git clone https://github.com/sura1128/data_recorder.git```
+Clone the repository using the link -> 
+ git clone https://github.com/sura1128/data_recorder.git <br><br>
 
 To run the tool ->
  ```python data_recorder.py -h```
@@ -78,7 +79,7 @@ def upload_txt_data(self):
  
 The same format can be followed for the download function.
 
-
+<br>
 <h3> Constraints and Improvements </h3>
 Data Recorder is not using a database at the moment. Instead, it stores all information
 into a .json file called main.json which is located in the same folder as the tool itself.
@@ -90,3 +91,10 @@ Right now, adding is the only function possible. However, the following features
 - deleting an existing record
 - an API to add new fields
 - an API to add new formats
+
+<br>
+<h3> Running Unit Cases </h3>
+To run the unit cases for <b>data_recorder.py</b> -> 
+   ```python data_recorder_tests.py```
+<br>To run the unit cases for <b>data_handler.py</b> -> 
+   ```python data_handler_tests.py```
