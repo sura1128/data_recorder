@@ -60,6 +60,25 @@ If you want to convert a file (for eg. my_data.csv) to another supported format 
 <br> When prompted, enter the full paths of the source and destination files.
 
 
+<h3> Adding a new storage format </h3>
+Let's say you want to add a storage format for '.txt'. Here are steps you can take to achieve this:<br>
+
+1. The new format needs to be added to list of supported formats in <b>data_recorder.py</b> :<br>
+   ``` SUPPORTED_FORMATS = ["json", "csv", "yaml", "xml", "txt"] ``` <br>
+ 
+2. Once that is done, you will need to extend the class <b>FormatHandler</b> in <b>data_handler.py</b>: <br>
+This is the format that needs to be followed for the naming of the function. <br>
+
+``` 
+def upload_txt_data(self):
+    <add your logic here>
+        
+    return
+ ```
+ 
+The same format can be followed for the download function.
+
+
 <h3> Constraints and Improvements </h3>
 Data Recorder is not using a database at the moment. Instead, it stores all information
 into a .json file called main.json which is located in the same folder as the tool itself.
